@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Drop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Обновленные стили */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .balance {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .case {
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        /* Стиль для страницы оплаты */
+        .payment-page {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            padding: 20px;
+        }
+        .payment-method {
+            background: white;
+            color: black;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 Gift Drop</h1>
+        
+        <div class="balance" id="balance">
+            Баланс: 0 ₽
+        </div>
+        
+        <h2>Выберите кейс:</h2>
+        
+        <div class="case" onclick="openCase('Апгрейд')">
+            <h3>Апгрейд</h3>
+            <p>50 ₽</p>
+        </div>
+        
+        <div class="case" onclick="openCase('Баттл')">
+            <h3>Баттл</h3>
+            <p>30 ₽</p>
+        </div>
+        
+        <div class="case" onclick="openCase('Задания')">
+            <h3>Задания</h3>
+            <p>20 ₽</p>
+        </div>
+        
+        <button onclick="showPaymentPage()">💳 Пополнить баланс</button>
+    </div>
+
+    <!-- Страница оплаты -->
+    <div id="paymentPage" class="payment-page">
+        <h2>Выберите способ оплаты</h2>
+        
+        <div class="payment-method" onclick="payWithYoomoney()">
+            <h3>ЮMoney</h3>
+            <p>Комиссия 2%</p>
+        </div>
+        
+        <div class="payment-method" onclick="payWithQiwi()">
+            <h3>QIWI</h3>
+            <p>Комиссия 3%</p>
+        </div>
+        
+        <button onclick="hidePaymentPage()" style="background: #f44336;">Назад</button>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Данные пользователя (в реальном проекте получайте из БД)
+        let userData = {
+            balance: 0,
+            lastCaseTime: null
+        };
+        
+        // Обновляем отображение баланса
+        function updateBalance() {
+            document.getElementById('balance').innerText = `Баланс: ${userData.balance} ₽`;
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('userData', JSON.stringify(userData));
+        }
+        
+        // Загружаем сохраненные данные
+        function loadData() {
+            const savedData = localStorage.getItem('userData');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+                updateBalance();
+            }
+        }
+        
+        // Показываем страницу оплаты
+        function showPaymentPage() {
+            document.getElementById('paymentPage').style.display = 'block';
+        }
+        
+        // Скрываем страницу оплаты
+        function hidePaymentPage() {
+            document.getElementById('paymentPage').style.display = 'none';
+        }
+        
+        // Оплата через ЮMoney
+        function payWithYoomoney() {
+            const amount = prompt("Введите сумму пополнения (мин. 10 ₽):");
+            if (amount && amount >= 10) {
+                // В реальном проекте: отправка на сервер для создания платежа
+                alert(`Перенаправление на оплату ${amount} ₽ через ЮMoney...`);
+                
+                // Имитация успешной оплаты
+                userData.balance += parseInt(amount);
+                updateBalance();
+                hidePaymentPage();
+            }
+        }
+        
+        // Оплата через QIWI
+        function payWithQiwi() {
+            const amount = prompt("Введите сумму пополнения (мин. 5 ₽):");
+            if (amount && amount >= 5) {
+                alert(`Перенаправление на оплату ${amount} ₽ через QIWI...`);
+                
+                // Имитация успешной оплаты
+                userData.balance += parseInt(amount);
+                updateBalance();
+                hidePaymentPage();
+            }
+        }
+        
+        // Открытие кейса
+        function openCase(caseType) {
+            let casePrice = 0;
+            
+            // Определяем цену кейса
+            switch(caseType) {
+                case 'Апгрейд': casePrice = 50; break;
+                case 'Баттл': casePrice = 30; break;
+                case 'Задания': casePrice = 20; break;
+            }
+            
+            // Проверяем баланс
+            if (userData.balance < casePrice) {
+                alert("Недостаточно средств!");
+                return;
+            }
+            
+            // Вычитаем стоимость
+            userData.balance -= casePrice;
+            userData.lastCaseTime = new Date().toISOString();
+            updateBalance();
+            
+            // Выбираем случайный приз
+            const prizes = {
+                'Апгрейд': ['10 ₽', '20 ₽', '50 ₽', '100 ₽', 'Редкий предмет'],
+                'Баттл': ['5 ₽', '10 ₽', '25 ₽', 'Бонусный кейс'],
+                'Задания': ['3 ₽', '7 ₽', '15 ₽', 'Случайный предмет']
+            };
+            
+            const prize = prizes[caseType][Math.floor(Math.random() * prizes[caseType].length)];
+            alert(`🎉 Поздравляем! Вы получили: ${prize}`);
+        }
+        
+        // Инициализация при загрузке
+        loadData();
+    </script>
+</body>
+</html>
