@@ -1,0 +1,193 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Drop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .balance {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        .case {
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+            .case:hover {
+                transform: scale(1.05);
+            }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            width: 80%;
+        }
+
+        .prize-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .prize-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            color: #333;
+            max-width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 Gift Drop</h1>
+
+        <div class="balance" id="balance">
+            Баланс: 0 ⭐
+        </div>
+
+        <h2>Выберите кейс:</h2>
+
+        <div class="case" onclick="openCase('Апгрейд')">
+            <h3>Апгрейд</h3>
+            <p>50 ⭐</p>
+        </div>
+
+        <div class="case" onclick="openCase('Баттл')">
+            <h3>Баттл</h3>
+            <p>30 ⭐</p>
+        </div>
+
+        <div class="case" onclick="openCase('Задания')">
+            <h3>Задания</h3>
+            <p>20 ⭐</p>
+        </div>
+
+        <button onclick="deposit()">💳 Пополнить баланс</button>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Показываем кнопку "Закрыть"
+        tg.MainButton.setText("Закрыть").show();
+        tg.MainButton.onClick(() => tg.close());
+
+        // Здесь будет реальный баланс из Telegram
+        let balance = 100; // Пример, замените на реальные данные
+
+        // Обновляем отображение баланса
+        function updateBalance() {
+            document.getElementById('balance').innerText = `Баланс: ${balance} ⭐`;
+        }
+
+        // Функция открытия кейса
+        function openCase(caseType) {
+            let casePrice = 0;
+            let prize = "";
+
+            // Определяем цену кейса
+            switch(caseType) {
+                case 'Апгрейд': casePrice = 50; break;
+                case 'Баттл': casePrice = 30; break;
+                case 'Задания': casePrice = 20; break;
+            }
+
+            // Проверяем баланс
+            if(balance < casePrice) {
+                alert("Недостаточно средств!");
+                return;
+            }
+
+            // Вычитаем стоимость
+            balance -= casePrice;
+            updateBalance();
+
+            // Выбираем случайный приз
+            const prizes = {
+                'Апгрейд': ['10 ⭐', '20 ⭐', '50 ⭐', '100 ⭐', 'Редкий предмет'],
+                'Баттл': ['5 ⭐', '10 ⭐', '25 ⭐', 'Бонусный кейс'],
+                'Задания': ['3 ⭐', '7 ⭐', '15 ⭐', 'Случайный предмет']
+            };
+
+            prize = prizes[caseType][Math.floor(Math.random() * prizes[caseType].length)];
+
+            // Показываем анимацию выигрыша
+            showPrize(prize);
+
+            // Отправляем данные в Telegram (если нужно)
+            tg.sendData(JSON.stringify({
+                action: "open_case",
+                case_type: caseType,
+                prize: prize
+            }));
+        }
+
+        // Функция пополнения баланса
+        function deposit() {
+            tg.sendData(JSON.stringify({
+                action: "deposit",
+                amount: 100
+            }));
+        }
+
+        // Показываем выигрыш
+        function showPrize(prize) {
+            const popup = document.createElement('div');
+            popup.className = 'prize-popup';
+            popup.innerHTML = `
+                <div class="prize-content">
+                    <h2>🎉 Поздравляем!</h2>
+                    <p>Ваш выигрыш:</p>
+                    <h1>${prize}</h1>
+                    <button onclick="this.parentElement.parentElement.remove()">OK</button>
+                </div>
+            `;
+            document.body.appendChild(popup);
+        }
+
+        // Инициализация при загрузке
+        updateBalance();
+    </script>
+</body>
+</html>
